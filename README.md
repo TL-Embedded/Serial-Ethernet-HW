@@ -3,6 +3,8 @@
 This is an Ethernet to Serial adaptor.
 See [Serial-Ethernet-FW](https://github.com/TL-Embedded/Serial-Ethernet-FW) for the firmware project.
 
+The hardware is done using KiCad, and uses my component library found here: [KiCadLib](https://github.com/Lambosaurus/KicadLib)
+
 The processor is a STM32G061.
 
 # Ethernet
