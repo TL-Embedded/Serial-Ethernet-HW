@@ -276,7 +276,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": "v1.0b"
+      "sch_revision": "v1.1"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -492,7 +492,7 @@
       "isolated_pin_label": "warning",
       "label_dangling": "error",
       "label_multiple_wires": "warning",
-      "lib_symbol_issues": "ignore",
+      "lib_symbol_issues": "warning",
       "lib_symbol_mismatch": "warning",
       "missing_bidi_pin": "warning",
       "missing_input_pin": "warning",
@@ -708,7 +708,7 @@
         "uuid": "5e366c51-f164-48f3-b84b-c1435b8d0e19"
       }
     ],
-    "used_designators": "",
+    "used_designators": "C1-31,N1,U1-5,R1-17,L1-2,Y1,#PWR1-30,J1-2,DS1-3",
     "variants": []
   },
   "sheets": [
