@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20250114)
+	(version 20260306)
 	(generator "eeschema")
-	(generator_version "9.0")
+	(generator_version "10.0")
 	(uuid "5e366c51-f164-48f3-b84b-c1435b8d0e19")
 	(paper "A4")
 	(title_block
@@ -104,11 +104,13 @@
 			(type solid)
 		)
 		(fill
-			(color 175 255 191 1.0000)
+			(color 175 255 191 1)
 		)
 		(uuid "63f43de9-7903-48e3-856b-0c61742f9a40")
 		(property "Sheetname" "Serial"
 			(at 50.8 37.3884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -118,6 +120,8 @@
 		)
 		(property "Sheetfile" "Serial.kicad_sch"
 			(at 50.8 64.0846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -166,11 +170,13 @@
 			(type solid)
 		)
 		(fill
-			(color 175 255 191 1.0000)
+			(color 175 255 191 1)
 		)
 		(uuid "9895efbf-dae8-4044-bf4b-fde2039598e9")
 		(property "Sheetname" "Ethernet"
 			(at 127 37.3884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -180,6 +186,8 @@
 		)
 		(property "Sheetfile" "Ethernet.kicad_sch"
 			(at 127 64.0846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -268,11 +276,13 @@
 			(type solid)
 		)
 		(fill
-			(color 175 255 191 1.0000)
+			(color 175 255 191 1)
 		)
 		(uuid "cb4db6ed-dea2-4bc0-9963-a311a1c0a9e9")
 		(property "Sheetname" "Host"
 			(at 88.9 37.3884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -282,6 +292,8 @@
 		)
 		(property "Sheetfile" "Host.kicad_sch"
 			(at 88.9 64.0846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
