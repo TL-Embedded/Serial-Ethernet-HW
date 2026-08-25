@@ -1,9 +1,10 @@
 import subprocess
-import os, sys, shutil, platform, json, argparse, glob
-import bom, image, pdfmerge
+import os, sys, math, shutil, platform
+import argparse, glob, contextlib, json
+import bom, image, pdfmerge, bundle
 
-SCRIPT_VERSION = "v1.22"
-KICAD_VERSION = "9.0"
+SCRIPT_VERSION = "v1.30"
+KICAD_VERSION = "10.0"
 
 if platform.platform().startswith("Windows"):
     # You may need to edit this
@@ -49,6 +50,16 @@ def clean_directory(dir: str):
     if (os.path.exists(dir)):
         shutil.rmtree(dir)
     os.makedirs(dir)
+
+@contextlib.contextmanager
+def temp_directory(base: str, name: str = "tmp", preserve: bool = False):
+    path = os.path.join(base, name)
+    os.makedirs(path, exist_ok=True)
+    try:
+        yield path
+    finally:
+        if not preserve:
+            shutil.rmtree(path)
 
 def report_errors(title: str, errors: list[dict[str, str]]) -> dict[str, int]:
     groups = {}
@@ -112,7 +123,7 @@ def export_sch_pdf(input_sch: str, output_pdf: str):
         "--output", output_pdf,
     ])
 
-def export_sch_bom(input_sch: str, output_csv: str) -> list[str]:
+def export_sch_bom(input_sch: str, output_csv: str, format: str = None) -> list[str]:
     os.makedirs( os.path.dirname(output_csv) )
     output_xml = output_csv.replace(".csv", ".xml")
     run_command([
@@ -121,7 +132,12 @@ def export_sch_bom(input_sch: str, output_csv: str) -> list[str]:
         "--output", output_xml,
     ])
     components = bom.load_components(output_xml)
-    bom.create_bom(components, output_csv)
+    
+    fields = []
+    if format == "jlc":
+        fields = ["LCSC_Part"]
+    
+    bom.create_bom(components, output_csv, fields)
     dnf_list = bom.get_dnf_list(components)
     os.remove(output_xml)
     return dnf_list
@@ -205,77 +221,140 @@ def export_pcb_ibom(input_pcb: str, output_file: str, dnf_list: list[str] = []):
         "--blacklist", ",".join(dnf_list)
     ], silent=True)
 
-def export_pcb_image(input_pcb: str, output_file: str, side: str = "front", zoom: float = 0.9):
+def export_pcb_image(input_pcb: str, output_file: str, side: str = "top", zoom: float = 0.9, resolution: int = 2000):
+    resolution = [str(resolution), str(resolution)]
     run_command([
         KICAD_CLI, "pcb", "render",
         input_pcb,
         "--output", output_file,
         "--quality", "user",
+        "--use-board-stackup-colors",
         "--perspective",
         "--zoom", f"{zoom:.2f}",
-        "--width", "2000",
-        "--height", "2000",
+        "--width", resolution[0],
+        "--height", resolution[1],
         "--background", "transparent",
         "--side", side,
+        
     ])
     image.crop_image(output_file, output_file)
 
-def export_pcb_drawings(input_pcb: str, output_file: str, layers: int):
+def motion_flip(t: float, dwell: float = 0.3):
+    if t > 0.5:
+        return motion_flip(t - 0.5) + 0.5
+    if t < dwell:
+        return 0.0
+    t_flip = (t - dwell) / (0.5 - dwell)
+    return 0.25 - (0.25 * math.cos(math.pi * t_flip))
+
+def export_pcb_animation(input_pcb: str, output_file: str, direction: str = "left", zoom: float = 0.7, framerate: int = 20, duration: float = 3.0, resolution: int = 640, curve: str = "orbit"):
+
+    export_format = output_file.split('.')[-1]
+    if not image.get_backend(export_format):
+        print_color(f"No {export_format} backend available. Skipping PCB animation", "y")
+        return
+
+    rotate_str = {
+        "up":       lambda a: f"{-a:.03f},0,0",
+        "down":     lambda a: f"{a:.03f},0,0",
+        "left":     lambda a: f"0,{a:.03f},0",
+        "right":    lambda a: f"0,{-a:.03f},0",
+    }[direction]
+
+    angle_fn = {
+        "orbit":    lambda t: 360.0 * t,
+        "flip":     lambda t: 360.0 * motion_flip(t, 0.3)
+    }[curve]
+
+    frames = int(duration * framerate)
+    resolution = [str(resolution), str(resolution)]
+    cache = {}
+
+    with temp_directory(os.path.dirname(output_file), "gif-tmp") as tmpdir:
+        images = []
+        for f in range(frames):
+            angle = round(angle_fn(f / frames), 2)
+            if angle not in cache:
+                path = os.path.join(tmpdir, f"{f:04d}.png")
+                run_command([
+                    KICAD_CLI, "pcb", "render",
+                    input_pcb,
+                    "--output", path,
+                    "--quality", "user",
+                    "--use-board-stackup-colors",
+                    "--perspective",
+                    "--zoom", f"{zoom:.2f}",
+                    "--width", resolution[0],
+                    "--height", resolution[1],
+                    "--background", "transparent",
+                    "--side", "top",
+                    "--rotate", rotate_str(angle)
+                ])
+                cache[angle] = path
+            images.append(cache[angle])
+        
+        image.make_animation(images, output_file, framerate)
+
+def export_pcb_drawings(input_pcb: str, output_file: str, layers: int, extra_layers: list[str] = None):
 
     if not pdfmerge.get_backend():
         print_color("No PDF merging backend available. Skipping PCB drawings", "y")
         return
 
-    tmpdir = os.path.join(os.path.dirname(output_file), "pdf-tmp")
-    os.makedirs(tmpdir, exist_ok=True)
+    with temp_directory(os.path.dirname(output_file), "pdf-tmp") as tmpdir:
+        plots = [
+            {
+                "name": "Top Fabrication",
+                "layers": ["F.Fab", "Edge.Cuts"],
+            },
+            {
+                "name": "Bottom Fabrication",
+                "layers": ["B.Fab", "Edge.Cuts"],
+            },
+            {
+                "name": "Top",
+                "layers": ["F.Cu", "F.Paste", "F.SilkS", "Edge.Cuts"],
+            },
+            {
+                "name": "Bottom",
+                "layers": ["B.Cu", "B.Paste", "B.SilkS", "Edge.Cuts"],
+            },
+        ]
 
-    plots = [
-        {
-            "name": "Top Fabrication",
-            "layers": ["F.Fab", "Edge.Cuts"],
-        },
-        {
-            "name": "Bottom Fabrication",
-            "layers": ["B.Fab", "Edge.Cuts"],
-        },
-        {
-            "name": "Top",
-            "layers": ["F.Cu", "F.Paste", "F.SilkS", "Edge.Cuts"],
-        },
-        {
-            "name": "Bottom",
-            "layers": ["B.Cu", "B.Paste", "B.SilkS", "Edge.Cuts"],
-        },
-    ]
+        if layers > 2:
+            # Put the internal layers between the top and bottom layers
+            bottom = plots.pop(-1)
+            for i in range(layers - 2):
+                plots.append({
+                    "name": f"Inner Layer {i + 1}",
+                    "layers": [f"In{i + 1}.Cu", "Edge.Cuts"]
+                })
+            plots.append(bottom)
 
-    if layers > 2:
-        # Put the internal layers between the top and bottom layers
-        bottom = plots.pop(-1)
-        for i in range(layers - 2):
-            plots.append({
-                "name": f"Inner Layer {i + 1}",
-                "layers": [f"In{i + 1}.Cu", "Edge.Cuts"]
-            })
-        plots.append(bottom)
+        if extra_layers:
+            for layer in extra_layers:
+                plots.append({
+                    "name": f"Layer {layer}",
+                    "layers": [layer, "Edge.Cuts"]
+                })
 
-    for plot in plots:
-        result = run_command([
-            KICAD_CLI, "pcb", "export", "pdf",
-            input_pcb,
-            "--layers", plot["layers"][0],
-            "--common-layers", ",".join(plot["layers"][1:]),
-            "--output", tmpdir,
-            "--include-border-title",
-            "--drill-shape-opt", "2",
-            "--define-var", f"LAYER_NAME={plot['name']}",
-            "--mode-separate",
-        ])
-        # Result format: "Plotted to 'outputs/pdf-tmp/pcb_name-F_Fab.pdf'."
-        plot["filename"] = result.split("'")[-2]
+        for plot in plots:
+            result = run_command([
+                KICAD_CLI, "pcb", "export", "pdf",
+                input_pcb,
+                "--layers", plot["layers"][0],
+                "--common-layers", ",".join(plot["layers"][1:]),
+                "--output", tmpdir,
+                "--include-border-title",
+                "--drill-shape-opt", "2",
+                "--define-var", f"LAYER_NAME={plot['name']}",
+                "--mode-separate",
+            ])
+            # Result format: "Plotted to 'outputs/pdf-tmp/pcb_name-F_Fab.pdf'."
+            plot["filename"] = result.split("'")[-2]
 
-    pages = [ plot["filename"] for plot in plots ]
-    pdfmerge.merge_pdf(pages, output_file)
-    shutil.rmtree(tmpdir)
+        pages = [ plot["filename"] for plot in plots ]
+        pdfmerge.merge_pdf(pages, output_file)
 
 def run_git_check() -> str:
     if not shutil.which("git"):
@@ -298,14 +377,7 @@ def run_git_check() -> str:
     return git_commit
 
 def zip_files(input_path: str, output_file: str, files: list[str] = None):
-    if files is None:
-        files = os.listdir(input_path)
-    run_command([
-        "tar",
-        "-C", input_path,
-        "-acf", output_file,
-    ] + files
-    )
+    bundle.bundle(input_path, output_file, files)
 
 def zip_release_pack(input_path: str, output_file: str, format: str):
     if format == "jlc":
@@ -330,13 +402,23 @@ if __name__ == "__main__":
     sys.argv[-1] = sys.argv[-1].strip()  # Remove trailing carriage return for *nix/win compat.
     argparser = argparse.ArgumentParser(description="Output generator for kicad projects")
     argparser.add_argument("--input", "-i", type=str, help="Kicad project", default="*.kicad_pro")
-    argparser.add_argument("--layers", "-l", type=int, help="Number of layers in the PCB design.", default=2)
     argparser.add_argument("--output", "-o", type=str, help="Output directory", default="outputs")
+    argparser.add_argument("--layers", "-l", type=int, help="Number of layers in the PCB design.", default=2)
+    argparser.add_argument("--extra-layer", action="append", default=[], help="Additional PCB layers to add to gerbers and drawings")
     argparser.add_argument("--render-side", type=str, help="Side of the board to render.", default="top", choices=["top", "bottom", "left", "right", "front", "back"])
-    argparser.add_argument("--render-zoom", type=float, help="Specifies the zoom used for rendering.", default=0.9)
+    argparser.add_argument("--render-zoom", type=float, help="Zoom used for rendering.", default=0.9)
+    argparser.add_argument("--render-resolution", type=int, help="Render resolution (before cropping)", default=2000)
+    argparser.add_argument("--anim-format", type=str, help="Selects output animation format", choices=image.ANIMATION_FORMATS)
+    argparser.add_argument("--anim-zoom", type=float, help="Zoom used for animation rendering.", default=0.7)
+    argparser.add_argument("--anim-duration", type=float, help="Duration of the animation in seconds.", default=5.0)
+    argparser.add_argument("--anim-framerate", type=int, help="Framerate of the animation.", default=20)
+    argparser.add_argument("--anim-resolution", type=int, help="Animation resolution (before cropping)", default=640)
+    argparser.add_argument("--anim-direction", type=str, help="Rotation direction of the animation", default="left", choices=["up", "down", "left", "right"])
+    argparser.add_argument("--anim-curve", type=str, help="Curve used for animation path", default="flip", choices=["orbit", "flip"])
     argparser.add_argument("--name", type=str, help="Output name", default=None)
     argparser.add_argument("--wait-on-done", action="store_true", help="Wait to hold the terminal open when done.")
     argparser.add_argument("--format", type=str, help="Manufacturer specific output options", default=None, choices=["jlc"])
+    argparser.add_argument("--compression", type=str, help="Compression format", default="zip", choices=bundle.SUPPORTED_FORMATS)
     args = argparser.parse_args()
 
     # Strip file extention
@@ -365,13 +447,13 @@ if __name__ == "__main__":
     run_pcb_drc(INPUT_PCB, OUTPUT_DIR)
 
     print("Generating BOM")
-    dnf_list = export_sch_bom(INPUT_SCH, os.path.join(OUTPUT_DIR, "Assembly" , OUTPUT_NAME + ".bom.csv"))
+    dnf_list = export_sch_bom(INPUT_SCH, os.path.join(OUTPUT_DIR, "Assembly" , OUTPUT_NAME + ".bom.csv"), args.format)
 
     print("Generating IBOM")
     export_pcb_ibom(INPUT_PCB, os.path.join(OUTPUT_DIR, OUTPUT_NAME + ".ibom.html"), dnf_list)
 
     print("Generating gerbers")
-    export_pcb_gerbers(INPUT_PCB, os.path.join(OUTPUT_DIR, "Gerber"), get_layer_names(args.layers))
+    export_pcb_gerbers(INPUT_PCB, os.path.join(OUTPUT_DIR, "Gerber"), get_layer_names(args.layers) + args.extra_layer)
 
     print("Generating drill reports")
     export_pcb_ncdrill(INPUT_PCB, os.path.join(OUTPUT_DIR, "NC Drill"))
@@ -380,20 +462,35 @@ if __name__ == "__main__":
     export_pcb_pos(INPUT_PCB, os.path.join(OUTPUT_DIR, "Assembly", OUTPUT_NAME + ".pos.csv"))
 
     print("Generating PCB drawings")
-    export_pcb_drawings(INPUT_PCB, os.path.join(OUTPUT_DIR, OUTPUT_NAME + ".drawings.pdf"), args.layers)
+    export_pcb_drawings(INPUT_PCB, os.path.join(OUTPUT_DIR, OUTPUT_NAME + ".drawings.pdf"), args.layers, args.extra_layer)
 
     print("Generating PCB render")
-    export_pcb_image(INPUT_PCB, os.path.join(OUTPUT_DIR, OUTPUT_NAME + ".png"), args.render_side, args.render_zoom)
+    export_pcb_image(INPUT_PCB, os.path.join(OUTPUT_DIR, OUTPUT_NAME + ".png"),
+            side = args.render_side,
+            zoom = args.render_zoom,
+            resolution = args.render_resolution
+        )
+
+    if args.anim_format:
+        print(f"Generating PCB {args.anim_format} animation")
+        export_pcb_animation(INPUT_PCB, os.path.join(OUTPUT_DIR, f"{OUTPUT_NAME}.{args.anim_format}"),
+            direction = args.anim_direction,
+            zoom = args.anim_zoom,
+            framerate = args.anim_framerate,
+            duration = args.anim_duration,
+            resolution = args.anim_resolution,
+            curve = args.anim_curve
+        )
 
     print("Generating step file")
     export_pcb_step(INPUT_PCB, os.path.join(OUTPUT_DIR, OUTPUT_NAME + ".step"))
 
-    print("Generating zip file")
-    zip_files(OUTPUT_DIR, os.path.join(OUTPUT_DIR, OUTPUT_NAME + ".zip"))
+    print(f"Generating {args.compression} file")
+    zip_files(OUTPUT_DIR, os.path.join(OUTPUT_DIR, f"{OUTPUT_NAME}.{args.compression}"))
 
     if args.format != None:
         print(f"Generating {args.format} release pack")
-        zip_release_pack(OUTPUT_DIR, os.path.join(OUTPUT_DIR, f"{OUTPUT_NAME}.{args.format}.zip"), args.format)
+        zip_release_pack(OUTPUT_DIR, os.path.join(OUTPUT_DIR, f"{OUTPUT_NAME}.{args.format}.{args.compression}"), args.format)
 
     print("Done!")
     if args.wait_on_done:
