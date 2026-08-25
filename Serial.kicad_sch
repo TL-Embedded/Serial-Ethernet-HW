@@ -6,7 +6,7 @@
 	(paper "A4")
 	(title_block
 		(title "Serial-Ethernet")
-		(date "2026-07-23")
+		(date "2026-07-25")
 		(rev "v1.1")
 		(company "TL Embedded")
 	)
@@ -2002,7 +2002,7 @@
 	)
 	(wire
 		(pts
-			(xy 162.56 66.04) (xy 176.53 66.04)
+			(xy 158.75 66.04) (xy 176.53 66.04)
 		)
 		(stroke
 			(width 0)
@@ -2052,7 +2052,7 @@
 	)
 	(wire
 		(pts
-			(xy 207.01 60.96) (xy 234.95 60.96)
+			(xy 207.01 60.96) (xy 223.52 60.96)
 		)
 		(stroke
 			(width 0)
@@ -2122,7 +2122,7 @@
 	)
 	(wire
 		(pts
-			(xy 207.01 66.04) (xy 234.95 66.04)
+			(xy 207.01 66.04) (xy 223.52 66.04)
 		)
 		(stroke
 			(width 0)
@@ -2182,7 +2182,7 @@
 	)
 	(wire
 		(pts
-			(xy 162.56 63.5) (xy 176.53 63.5)
+			(xy 158.75 63.5) (xy 176.53 63.5)
 		)
 		(stroke
 			(width 0)
@@ -2192,7 +2192,7 @@
 	)
 	(wire
 		(pts
-			(xy 207.01 58.42) (xy 234.95 58.42)
+			(xy 207.01 58.42) (xy 223.52 58.42)
 		)
 		(stroke
 			(width 0)
@@ -2392,7 +2392,7 @@
 	)
 	(wire
 		(pts
-			(xy 162.56 58.42) (xy 176.53 58.42)
+			(xy 158.75 58.42) (xy 176.53 58.42)
 		)
 		(stroke
 			(width 0)
@@ -2422,7 +2422,7 @@
 	)
 	(wire
 		(pts
-			(xy 207.01 63.5) (xy 234.95 63.5)
+			(xy 207.01 63.5) (xy 223.52 63.5)
 		)
 		(stroke
 			(width 0)
@@ -2492,7 +2492,7 @@
 	)
 	(wire
 		(pts
-			(xy 162.56 60.96) (xy 176.53 60.96)
+			(xy 158.75 60.96) (xy 176.53 60.96)
 		)
 		(stroke
 			(width 0)
@@ -2520,26 +2520,6 @@
 		)
 		(uuid "fff76ff3-891f-4761-9c18-201807a0e5cc")
 	)
-	(label "CN_CTS"
-		(at 162.56 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "16a09d6f-8c0b-4089-a241-8f2cb5f14378")
-	)
-	(label "CN_RXD"
-		(at 162.56 63.5 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "1a4d60d4-dc1a-46c1-9d23-46b25452d2b6")
-	)
 	(label "CN_RTS"
 		(at 40.64 83.82 0)
 		(effects
@@ -2560,6 +2540,16 @@
 		)
 		(uuid "1f8c8f3d-55e1-4b79-8e01-426f8c0a3ebc")
 	)
+	(label "CN_CTS"
+		(at 158.75 63.5 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "371d565c-fa5f-44d3-904d-2b64a751d6da")
+	)
 	(label "CN_TXD"
 		(at 105.41 85.09 180)
 		(effects
@@ -2579,6 +2569,26 @@
 			(justify left bottom)
 		)
 		(uuid "5830b6a6-53f3-4e82-92ea-d91740a4c200")
+	)
+	(label "CN_TXD"
+		(at 158.75 60.96 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "5ec53ace-2c43-46bb-8304-f2976e0b1f6c")
+	)
+	(label "CN_RTS"
+		(at 158.75 58.42 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "86dafba8-f5bc-4c71-b248-973e1061a6b8")
 	)
 	(label "CN_RXD"
 		(at 181.61 137.16 0)
@@ -2610,25 +2620,15 @@
 		)
 		(uuid "8e82b5a7-4ed8-4312-836c-d51954ed0801")
 	)
-	(label "CN_TXD"
-		(at 162.56 58.42 0)
+	(label "CN_RXD"
+		(at 158.75 66.04 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "9deb6f1c-00aa-4d1b-9ba5-7b1e95a64e82")
-	)
-	(label "CN_RTS"
-		(at 162.56 60.96 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "bcf78fff-b996-423d-a16f-4ae1e943ea0f")
+		(uuid "ebb4f98c-af55-4ec6-b3b2-97aa4e0e3f91")
 	)
 	(label "CN_CTS"
 		(at 181.61 148.59 0)
@@ -2650,6 +2650,17 @@
 			(justify left)
 		)
 		(uuid "15dbf6a0-0ed6-4a26-a7da-0a0d590ab8c0")
+	)
+	(hierarchical_label "RX"
+		(shape output)
+		(at 223.52 66.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "20e5996b-39f8-4df8-908d-5e5d376525aa")
 	)
 	(hierarchical_label "RTS"
 		(shape input)
@@ -2673,28 +2684,6 @@
 		)
 		(uuid "33e80df0-3d1a-4962-a80f-0ffe9b553ef2")
 	)
-	(hierarchical_label "CTS"
-		(shape output)
-		(at 234.95 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "34b54d96-fa2d-4bee-9126-93a26fbdc6b1")
-	)
-	(hierarchical_label "RTS"
-		(shape input)
-		(at 234.95 60.96 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "587d78ff-efcf-4919-89da-69cb7942b5f9")
-	)
 	(hierarchical_label "RX"
 		(shape output)
 		(at 201.93 137.16 0)
@@ -2706,27 +2695,38 @@
 		)
 		(uuid "705c780d-1e1f-48c6-982e-776b8b4fe551")
 	)
-	(hierarchical_label "RX"
+	(hierarchical_label "CTS"
 		(shape output)
-		(at 234.95 63.5 0)
+		(at 223.52 63.5 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "ac7ceedb-4815-45ed-95b8-83e11b0538b5")
+		(uuid "78ac5a29-1bcc-4302-8759-f8f4be1e9f19")
+	)
+	(hierarchical_label "RTS"
+		(shape input)
+		(at 223.52 58.42 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "7be06633-bbe8-4450-9c62-0e2e26d7447e")
 	)
 	(hierarchical_label "TX"
 		(shape input)
-		(at 234.95 58.42 0)
+		(at 223.52 60.96 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left)
 		)
-		(uuid "c0476549-fe71-4a4c-9193-ffed62eb7866")
+		(uuid "da022e6f-cf80-4b85-92b7-9e81b4a544ea")
 	)
 	(symbol
 		(lib_id "C_Capacitor:C_0603")

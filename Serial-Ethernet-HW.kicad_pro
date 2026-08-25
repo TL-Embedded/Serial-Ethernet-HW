@@ -63,11 +63,11 @@
           "hatch_thickness": 1.0,
           "min_clearance": 0.2,
           "min_island_area": 10.0,
-          "min_thickness": 0.25,
+          "min_thickness": 0.1,
           "pad_connection": 1,
           "remove_islands": 0,
-          "thermal_relief_gap": 0.5,
-          "thermal_relief_spoke_width": 0.5
+          "thermal_relief_gap": 0.25,
+          "thermal_relief_spoke_width": 0.2
         }
       },
       "diff_pair_dimensions": [
@@ -82,12 +82,7 @@
           "width": 0.2
         }
       ],
-      "drc_exclusions": [
-        [
-          "lib_footprint_issues|70400000|97800000|35eeb8bf-8b03-4fd2-878e-d6c5af76c754|00000000-0000-0000-0000-000000000000",
-          ""
-        ]
-      ],
+      "drc_exclusions": [],
       "meta": {
         "version": 2
       },
@@ -132,7 +127,7 @@
         "padstack": "error",
         "pth_inside_courtyard": "ignore",
         "shorting_items": "error",
-        "silk_edge_clearance": "warning",
+        "silk_edge_clearance": "ignore",
         "silk_over_copper": "warning",
         "silk_overlap": "warning",
         "skew_out_of_range": "error",
@@ -228,7 +223,9 @@
       ],
       "track_widths": [
         0.0,
-        0.2
+        0.2,
+        0.3,
+        0.5
       ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
@@ -708,7 +705,7 @@
         "uuid": "5e366c51-f164-48f3-b84b-c1435b8d0e19"
       }
     ],
-    "used_designators": "C1-31,N1,U1-5,R1-17,L1-2,Y1,#PWR1-30,J1-2,DS1-3",
+    "used_designators": "C1-31,N1-5,U1-5,R1-17,L1-2,Y1,#PWR1-30,J1-2,DS1-3",
     "variants": []
   },
   "sheets": [
